@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Cloud Resource Allocation | Project 39</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:        #060a14;
+    --bg2:       #0d1424;
+    --bg3:       #111c30;
+    --card:      #0f1929;
+    --border:    #1e2f4a;
+    --accent:    #00c8ff;
+    --accent2:   #7c5cfc;
+    --green:     #00e5a0;
+    --orange:    #ff8c42;
+    --red:       #ff4d6d;
+    --yellow:    #ffe066;
+    --text:      #e2eaf5;
+    --muted:     #5a7098;
+    --font-mono: 'Space Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,200,255,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,255,.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative; z-index: 10;
+    background: linear-gradient(180deg, #060e1e 0%, transparent 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 36px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text h1 { font-family: var(--font-mono); font-size: 14px; color: var(--accent); letter-spacing: 2px; }
+  .logo-text p  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .header-badge {
+    background: var(--bg3); border: 1px solid var(--border);
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 11px; color: var(--muted); font-family: var(--font-mono);
+  }
+  .header-badge span { color: var(--green); }
+
+  /* ── LAYOUT ── */
+  .wrapper { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
+
+  /* ── HERO ── */
+  .hero {
+    text-align: center; padding: 48px 0 40px;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: rgba(0,200,255,.08); border: 1px solid rgba(0,200,255,.2);
+    color: var(--accent); font-size: 11px; font-family: var(--font-mono);
+    padding: 4px 14px; border-radius: 20px; letter-spacing: 2px;
+    margin-bottom: 18px;
+  }
+  .hero h2 {
+    font-size: clamp(28px, 4vw, 48px); font-weight: 700;
+    line-height: 1.15;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 60%, var(--accent2) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+  }
+  .hero p { color: var(--muted); max-width: 560px; margin: 0 auto; font-size: 15px; line-height: 1.7; }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    margin: 36px 0;
+  }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px 22px;
+    position: relative; overflow: hidden;
+    transition: transform .2s, border-color .2s;
+  }
+  .stat-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .stat-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+  .stat-label { font-size: 11px; color: var(--muted); font-family: var(--font-mono); letter-spacing: 1px; }
+  .stat-value { font-size: 28px; font-weight: 700; font-family: var(--font-mono); margin: 6px 0 2px; color: var(--accent); }
+  .stat-sub   { font-size: 11px; color: var(--muted); }
+
+  /* ── TWO-COL LAYOUT ── */
+  .two-col { display: grid; grid-template-columns: 340px 1fr; gap: 24px; margin-bottom: 24px; }
+
+  /* ── PANEL ── */
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+  }
+  .panel-header {
+    background: var(--bg3); padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-title {
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .panel-body { padding: 20px; }
+
+  /* ── FORM ELEMENTS ── */
+  label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; font-family: var(--font-mono); }
+  input, select {
+    width: 100%; background: var(--bg2); border: 1px solid var(--border);
+    color: var(--text); font-family: var(--font-mono); font-size: 13px;
+    padding: 9px 12px; border-radius: 8px; outline: none;
+    transition: border-color .2s;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  .form-row { margin-bottom: 14px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px;
+    font-family: var(--font-mono);
+  }
+  .badge-high   { background: rgba(255,77,109,.15);  color: var(--red);    border: 1px solid rgba(255,77,109,.3); }
+  .badge-medium { background: rgba(255,140,66,.15);  color: var(--orange); border: 1px solid rgba(255,140,66,.3); }
+  .badge-low    { background: rgba(0,229,160,.15);   color: var(--green);  border: 1px solid rgba(0,229,160,.3); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    cursor: pointer; border: none; font-family: var(--font-mono);
+    font-size: 12px; letter-spacing: 1px; border-radius: 8px; padding: 10px 18px;
+    transition: all .2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff; width: 100%;
+  }
+  .btn-primary:hover { opacity: .85; transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--bg3); color: var(--accent);
+    border: 1px solid var(--border); width: 100%;
+  }
+  .btn-secondary:hover { border-color: var(--accent); }
+  .btn-compare {
+    background: linear-gradient(135deg, var(--accent2), #c47aff);
+    color: #fff; width: 100%; margin-top: 10px;
+  }
+  .btn-compare:hover { opacity: .85; transform: translateY(-1px); }
+
+  .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+
+  /* ── VM LIST ── */
+  .vm-item {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: border-color .2s;
+  }
+  .vm-item:hover { border-color: var(--accent); }
+  .vm-name { font-size: 13px; font-weight: 500; }
+  .vm-specs { font-size: 11px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px; }
+
+  /* ── SERVER CARDS ── */
+  .server-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 16px; }
+  .server-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px;
+    transition: border-color .2s, transform .2s;
+  }
+  .server-card:hover { border-color: var(--accent2); transform: translateY(-2px); }
+  .server-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .server-id { font-family: var(--font-mono); font-size: 14px; color: var(--accent2); font-weight: 700; }
+  .server-cost { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-family: var(--font-mono); }
+  .progress-bar { height: 6px; background: var(--bg3); border-radius: 3px; margin-bottom: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+  .fill-cpu  { background: linear-gradient(90deg, var(--accent), #0080ff); }
+  .fill-mem  { background: linear-gradient(90deg, var(--accent2), #c47aff); }
+
+  /* ── RESULTS TABLE ── */
+  .results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .results-table th {
+    background: var(--bg3); color: var(--muted); font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 1px; padding: 10px 14px; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .results-table td { padding: 11px 14px; border-bottom: 1px solid rgba(30,47,74,.5); vertical-align: middle; }
+  .results-table tr:hover td { background: rgba(0,200,255,.03); }
+  .results-table tr:last-child td { border-bottom: none; }
+
+  .status-ok   { color: var(--green); font-family: var(--font-mono); font-size: 11px; }
+  .status-fail { color: var(--red);   font-family: var(--font-mono); font-size: 11px; }
+  .server-pill {
+    display: inline-block; padding: 2px 10px; border-radius: 6px;
+    background: rgba(124,92,252,.15); border: 1px solid rgba(124,92,252,.3);
+    color: var(--accent2); font-family: var(--font-mono); font-size: 11px;
+  }
+
+  /* ── COMPARE PANEL ── */
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .compare-algo {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px;
+  }
+  .compare-algo h4 { font-family: var(--font-mono); font-size: 12px; color: var(--accent); margin-bottom: 14px; letter-spacing: 1px; }
+  .metric-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(30,47,74,.5); }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-key { font-size: 12px; color: var(--muted); }
+  .metric-val { font-family: var(--font-mono); font-size: 13px; color: var(--text); }
+  .metric-val.better { color: var(--green); }
+  .metric-val.worse  { color: var(--orange); }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 6px; margin-bottom: 20px; }
+  .tab {
+    padding: 8px 18px; border-radius: 8px; cursor: pointer;
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: 1px;
+    border: 1px solid var(--border); color: var(--muted);
+    background: transparent; transition: all .2s;
+  }
+  .tab.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── ALGO SELECTOR ── */
+  .algo-select { display: flex; gap: 8px; margin-bottom: 16px; }
+  .algo-btn {
+    flex: 1; padding: 10px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--bg2);
+    color: var(--muted); font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 1px; transition: all .2s; text-align: center;
+  }
+  .algo-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,200,255,.08); }
+
+  /* ── LOADING ── */
+  .loading {
+    display: none; text-align: center; padding: 40px;
+    color: var(--muted); font-family: var(--font-mono); font-size: 12px;
+  }
+  .spinner {
+    width: 32px; height: 32px; margin: 0 auto 12px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center; padding: 50px 20px;
+    color: var(--muted); font-family: var(--font-mono); font-size: 12px;
+  }
+  .empty-state .icon { font-size: 36px; margin-bottom: 14px; opacity: .4; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center; padding: 28px; color: var(--muted);
+    font-size: 11px; font-family: var(--font-mono);
+    border-top: 1px solid var(--border); margin-top: 40px;
+    position: relative; z-index: 1;
+  }
+
+  /* ── SIMULATION CANVAS ── */
+  #simCanvas { cursor: default; }
+
+  @media (max-width: 900px) {
+    .two-col    { grid-template-columns: 1fr; }
+    .stats-row  { grid-template-columns: 1fr 1fr; }
+    .compare-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">☁</div>
+    <div class="logo-text">
+      <h1>CLOUD-AI ALLOCATOR</h1>
+      <p>S.B. Jain Institute of Technology · CSE Dept · Project 39</p>
+    </div>
+  </div>
+  <div class="header-badge">STATUS: <span>ONLINE</span></div>
+</header>
+
+<div class="wrapper">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">AI TECHNIQUE: HEURISTIC SEARCH</div>
+    <h2>AI-Based Cloud Resource<br>Allocation System</h2>
+    <p>Optimal VM placement using A* and Greedy Best-First Search algorithms. Minimize cloud cost, maximize resource utilization.</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card">
+      <div class="stat-label">TOTAL SERVERS</div>
+      <div class="stat-value" id="statServers">0</div>
+      <div class="stat-sub">Available nodes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">TOTAL VMs</div>
+      <div class="stat-value" id="statVMs">0</div>
+      <div class="stat-sub">Workloads queued</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">LAST COST</div>
+      <div class="stat-value" id="statCost">—</div>
+      <div class="stat-sub">Allocation cost $</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">EXEC TIME</div>
+      <div class="stat-value" id="statTime">—</div>
+      <div class="stat-sub">Milliseconds</div>
+    </div>
+  </div>
+
+  <!-- MAIN TWO-COL -->
+  <div class="two-col">
+
+    <!-- LEFT: CONTROLS -->
+    <div>
+      <!-- ADD SERVER FORM -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">🖥 ADD SERVER</span>
+        </div>
+        <div class="panel-body">
+          <div class="form-row">
+            <label>SERVER ID</label>
+            <input type="text" id="srvId" placeholder="e.g. S1"/>
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>CPU CORES</label>
+              <input type="number" id="srvCpu" placeholder="e.g. 32" min="1"/>
+            </div>
+            <div class="form-row">
+              <label>MEMORY (GB)</label>
+              <input type="number" id="srvMem" placeholder="e.g. 128" min="1"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>COST PER UNIT ($)</label>
+            <input type="number" id="srvCost" placeholder="e.g. 0.05" min="0.001" step="0.001"/>
+          </div>
+          <button class="btn btn-secondary" onclick="addServer()">+ ADD SERVER</button>
+        </div>
+      </div>
+
+      <!-- ADD VM FORM -->
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-header">
+          <span class="panel-title">⚡ ADD VIRTUAL MACHINE</span>
+        </div>
+        <div class="panel-body">
+          <div class="form-row">
+            <label>TASK NAME</label>
+            <input type="text" id="vmTaskName" placeholder="e.g. Web Server"/>
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>CPU (CORES)</label>
+              <input type="number" id="vmCpu" placeholder="e.g. 4" min="1"/>
+            </div>
+            <div class="form-row">
+              <label>MEMORY (GB)</label>
+              <input type="number" id="vmMemory" placeholder="e.g. 16" min="1"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>PRIORITY</label>
+            <select id="vmPriority">
+              <option value="1">🔴 High</option>
+              <option value="2" selected>🟠 Medium</option>
+              <option value="3">🟢 Low</option>
+            </select>
+          </div>
+          <button class="btn btn-secondary" onclick="addVM()">+ ADD VM TO QUEUE</button>
+        </div>
+      </div>
+
+      <!-- ALGORITHM + RUN -->
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-header">
+          <span class="panel-title">🧠 ALGORITHM & RUN</span>
+        </div>
+        <div class="panel-body">
+          <label style="margin-bottom:8px">SELECT ALGORITHM</label>
+          <div class="algo-select" style="margin-bottom:14px">
+            <div class="algo-btn active" onclick="selectAlgo('astar', this)">A* SEARCH</div>
+            <div class="algo-btn" onclick="selectAlgo('greedy', this)">GREEDY BFS</div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="runAllocation()">▶ RUN ALLOCATION</button>
+            <button class="btn btn-compare" onclick="runCompare()">⚖ COMPARE ALGORITHMS</button>
+            <button class="btn btn-secondary" onclick="clearAll()">↺ RESET TO DEFAULT</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: OUTPUT -->
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">📊 OUTPUT</span>
+        </div>
+        <div class="panel-body">
+
+          <div class="tabs">
+            <button class="tab active" onclick="switchTab('results', this)">ALLOCATION LOG</button>
+            <button class="tab" onclick="switchTab('servers', this)">SERVER STATE</button>
+            <button class="tab" onclick="switchTab('compare', this)">COMPARISON</button>
+            <button class="tab" onclick="switchTab('simulation', this)">🎬 SIMULATION</button>
+          </div>
+
+          <!-- RESULTS TAB -->
+          <div class="tab-content active" id="tab-results">
+            <div class="loading" id="loadingSpinner">
+              <div class="spinner"></div>
+              RUNNING HEURISTIC SEARCH...
+            </div>
+            <div id="resultTable">
+              <div class="empty-state">
+                <div class="icon">🔍</div>
+                Run allocation to see results
+              </div>
+            </div>
+          </div>
+
+          <!-- SERVERS TAB -->
+          <div class="tab-content" id="tab-servers">
+            <div id="serverCards">
+              <div class="empty-state">
+                <div class="icon">🖥</div>
+                Run allocation to see server states
+              </div>
+            </div>
+          </div>
+
+          <!-- COMPARE TAB -->
+          <div class="tab-content" id="tab-compare">
+            <div id="compareResult">
+              <div class="empty-state">
+                <div class="icon">⚖</div>
+                Click "Compare Algorithms" to benchmark both
+              </div>
+            </div>
+          </div>
+
+          <!-- SIMULATION TAB -->
+          <div class="tab-content" id="tab-simulation">
+
+            <!-- Controls bar -->
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+              <button class="btn btn-primary"   style="width:auto;padding:8px 20px" onclick="startSimulation()">▶ START</button>
+              <button class="btn btn-secondary" style="width:auto;padding:8px 20px" onclick="pauseSimulation()">⏸ PAUSE</button>
+              <button class="btn btn-secondary" style="width:auto;padding:8px 20px" onclick="resetSimulation()">↺ RESET</button>
+              <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+                <span style="font-size:11px;color:var(--muted);font-family:var(--font-mono)">SPEED</span>
+                <input type="range" id="simSpeed" min="1" max="5" value="2" style="width:70px;accent-color:var(--accent)"/>
+              </div>
+              <span id="simStatus" style="font-size:11px;font-family:var(--font-mono);color:var(--muted);min-width:120px">IDLE</span>
+            </div>
+
+            <!-- Step info banner -->
+            <div id="simStepBanner" style="display:none;background:rgba(0,200,255,.07);border:1px solid rgba(0,200,255,.2);border-radius:10px;padding:10px 16px;margin-bottom:12px;font-family:var(--font-mono);font-size:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+              <span>STEP <span id="bannerStep" style="color:var(--accent);font-size:16px;font-weight:700">0</span> / <span id="bannerTotal" style="color:var(--muted)">0</span></span>
+              <span id="bannerVm"  style="color:var(--yellow)">—</span>
+              <span>→</span>
+              <span id="bannerSrv" style="color:var(--green)">—</span>
+              <span id="bannerCost" style="color:var(--orange);margin-left:auto">$0.00</span>
+            </div>
+
+            <!-- Canvas: network graph -->
+            <canvas id="simCanvas" style="width:100%;border-radius:10px;background:var(--bg2);border:1px solid var(--border);display:block;margin-bottom:12px"></canvas>
+
+            <!-- Animated bar charts: per-server CPU + Memory -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+              <div style="font-size:11px;font-family:var(--font-mono);color:var(--accent);margin-bottom:12px;letter-spacing:1px">📊 PER-SERVER RESOURCE UTILIZATION — STEP BY STEP</div>
+              <div id="serverBarsChart" style="display:flex;flex-direction:column;gap:10px"></div>
+            </div>
+
+            <!-- Two mini line charts -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px">
+                <div style="font-size:11px;font-family:var(--font-mono);color:var(--accent);margin-bottom:6px">AVG CPU UTILIZATION</div>
+                <canvas id="cpuChart" height="72"></canvas>
+              </div>
+              <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px">
+                <div style="font-size:11px;font-family:var(--font-mono);color:var(--accent2);margin-bottom:6px">CUMULATIVE COST ($)</div>
+                <canvas id="costChart" height="72"></canvas>
+              </div>
+            </div>
+
+            <!-- Event log -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px">
+              <div style="font-size:11px;font-family:var(--font-mono);color:var(--muted);margin-bottom:8px">EVENT LOG</div>
+              <div id="simLog" style="max-height:130px;overflow-y:auto;font-size:11px;font-family:var(--font-mono);color:var(--muted);line-height:1.9"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERVER LIST + VM QUEUE ROW -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">🖥 SERVER LIST</span>
+        <span id="serverCount" style="font-size:12px;color:var(--muted);font-family:var(--font-mono)">0 servers</span>
+      </div>
+      <div class="panel-body" id="serverList" style="max-height:260px;overflow-y:auto;padding:12px">
+        <div class="empty-state" style="padding:24px"><div class="icon">🖥</div>Add servers using the form above</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">📋 VM QUEUE</span>
+        <span id="vmCount" style="font-size:12px;color:var(--muted);font-family:var(--font-mono)">0 VMs</span>
+      </div>
+      <div class="panel-body" id="vmList" style="max-height:260px;overflow-y:auto;padding:12px">
+        <div class="empty-state" style="padding:24px"><div class="icon">⚡</div>Add VMs using the form above</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERVER OVERVIEW -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">🖥 SERVER INFRASTRUCTURE</span>
+    </div>
+    <div class="panel-body">
+      <div class="server-grid" id="serverOverview"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  PROJECT 39 · AI-BASED CLOUD RESOURCE ALLOCATION SYSTEM · S.B. JAIN INSTITUTE OF TECHNOLOGY, NAGPUR
+  · DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING · HEURISTIC SEARCH | PYTHON + FLASK
+</footer>
+
+<script>
+// ── STATE ──
+let selectedAlgo = 'astar';
+let vmQueue      = [];
+let serverList   = [];
+let vmIdCounter  = 9;
+let srvIdCounter = 5;
+
+// ── DEFAULT DATA ──
+const DEFAULT_SERVERS = [
+  { server_id: 'S1', cpu_total: 32, memory_total: 128, cost_per_unit: 0.05, cpu_used: 0, memory_used: 0, allocated_vms: [], utilization_pct: 0 },
+  { server_id: 'S2', cpu_total: 16, memory_total: 64,  cost_per_unit: 0.03, cpu_used: 0, memory_used: 0, allocated_vms: [], utilization_pct: 0 },
+  { server_id: 'S3', cpu_total: 64, memory_total: 256, cost_per_unit: 0.08, cpu_used: 0, memory_used: 0, allocated_vms: [], utilization_pct: 0 },
+  { server_id: 'S4', cpu_total: 8,  memory_total: 32,  cost_per_unit: 0.02, cpu_used: 0, memory_used: 0, allocated_vms: [], utilization_pct: 0 },
+];
+
+const DEFAULT_VMS = [
+  { vm_id: 'VM1', task_name: 'Web Server',    cpu_required: 4,  memory_required: 16, priority: 1 },
+  { vm_id: 'VM2', task_name: 'Database',      cpu_required: 8,  memory_required: 32, priority: 1 },
+  { vm_id: 'VM3', task_name: 'ML Training',   cpu_required: 16, memory_required: 64, priority: 1 },
+  { vm_id: 'VM4', task_name: 'API Gateway',   cpu_required: 8,  memory_required: 32, priority: 2 },
+  { vm_id: 'VM5', task_name: 'Cache Layer',   cpu_required: 2,  memory_required: 8,  priority: 2 },
+  { vm_id: 'VM6', task_name: 'Monitoring',    cpu_required: 2,  memory_required: 4,  priority: 2 },
+  { vm_id: 'VM7', task_name: 'Batch Job',     cpu_required: 4,  memory_required: 16, priority: 3 },
+  { vm_id: 'VM8', task_name: 'Log Collector', cpu_required: 1,  memory_required: 2,  priority: 3 },
+];
+
+// ── INIT: pre-loaded ──
+function init() {
+  serverList = DEFAULT_SERVERS.map(s => ({ ...s }));
+  vmQueue    = DEFAULT_VMS.map(v => ({ ...v }));
+  renderVMList();
+  renderServerList();
+  renderServerOverview(serverList);
+  document.getElementById('statServers').textContent = serverList.length;
+  document.getElementById('statVMs').textContent     = vmQueue.length;
+}
+
+// ── ALGO SELECT ──
+function selectAlgo(algo, el) {
+  selectedAlgo = algo;
+  document.querySelectorAll('.algo-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── ADD SERVER ──
+function addServer() {
+  const id   = document.getElementById('srvId').value.trim() || ('S' + srvIdCounter);
+  const cpu  = parseInt(document.getElementById('srvCpu').value);
+  const mem  = parseInt(document.getElementById('srvMem').value);
+  const cost = parseFloat(document.getElementById('srvCost').value);
+  if (!cpu || !mem || isNaN(cost)) { alert('Please fill CPU, Memory and Cost fields.'); return; }
+  if (serverList.find(s => s.server_id === id)) { alert('Server ID "' + id + '" already exists.'); return; }
+  serverList.push({ server_id: id, cpu_total: cpu, memory_total: mem, cost_per_unit: cost, cpu_used: 0, memory_used: 0, allocated_vms: [], utilization_pct: 0 });
+  srvIdCounter++;
+  document.getElementById('srvId').value   = '';
+  document.getElementById('srvCpu').value  = '';
+  document.getElementById('srvMem').value  = '';
+  document.getElementById('srvCost').value = '';
+  renderServerList();
+  renderServerOverview(serverList);
+  document.getElementById('statServers').textContent = serverList.length;
+}
+
+// ── REMOVE SERVER ──
+function removeServer(id) {
+  serverList = serverList.filter(s => s.server_id !== id);
+  renderServerList();
+  renderServerOverview(serverList);
+  document.getElementById('statServers').textContent = serverList.length;
+}
+
+// ── RENDER SERVER LIST ──
+function renderServerList() {
+  const el = document.getElementById('serverList');
+  document.getElementById('serverCount').textContent = serverList.length + ' server' + (serverList.length !== 1 ? 's' : '');
+  if (!serverList.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:24px"><div class="icon">🖥</div>Add servers using the form above</div>';
+    return;
+  }
+  el.innerHTML = serverList.map(s => `
+    <div class="vm-item">
+      <div>
+        <div class="vm-name" style="color:var(--accent2)">🖥 ${s.server_id}</div>
+        <div class="vm-specs">CPU: ${s.cpu_total} cores · MEM: ${s.memory_total}GB · $${s.cost_per_unit}/unit</div>
+      </div>
+      <button onclick="removeServer('${s.server_id}')" style="background:rgba(255,77,109,.15);border:1px solid rgba(255,77,109,.3);color:var(--red);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-family:var(--font-mono)">✕</button>
+    </div>`).join('');
+}
+
+// ── ADD VM ──
+function addVM() {
+  const name = document.getElementById('vmTaskName').value.trim();
+  const cpu  = parseInt(document.getElementById('vmCpu').value);
+  const mem  = parseInt(document.getElementById('vmMemory').value);
+  const pri  = parseInt(document.getElementById('vmPriority').value);
+  if (!name || !cpu || !mem) { alert('Please fill Task Name, CPU and Memory.'); return; }
+  vmQueue.push({ vm_id: 'VM' + vmIdCounter++, task_name: name, cpu_required: cpu, memory_required: mem, priority: pri });
+  document.getElementById('vmTaskName').value = '';
+  document.getElementById('vmCpu').value      = '';
+  document.getElementById('vmMemory').value   = '';
+  renderVMList();
+  document.getElementById('statVMs').textContent = vmQueue.length;
+}
+
+// ── REMOVE VM ──
+function removeVM(id) {
+  vmQueue = vmQueue.filter(v => v.vm_id !== id);
+  renderVMList();
+  document.getElementById('statVMs').textContent = vmQueue.length;
+}
+
+// ── RENDER VM LIST ──
+function renderVMList() {
+  const container = document.getElementById('vmList');
+  document.getElementById('vmCount').textContent = vmQueue.length + ' VM' + (vmQueue.length !== 1 ? 's' : '');
+  if (!vmQueue.length) {
+    container.innerHTML = '<div class="empty-state" style="padding:24px"><div class="icon">⚡</div>Add VMs using the form above</div>';
+    return;
+  }
+  container.innerHTML = vmQueue.map(vm => {
+    const priBadge = vm.priority === 1 ? 'badge-high' : vm.priority === 2 ? 'badge-medium' : 'badge-low';
+    const priText  = vm.priority === 1 ? 'HIGH' : vm.priority === 2 ? 'MED' : 'LOW';
+    return `<div class="vm-item">
+      <div>
+        <div class="vm-name">${vm.task_name} <span style="color:var(--muted);font-size:11px;font-family:var(--font-mono)">${vm.vm_id}</span></div>
+        <div class="vm-specs">CPU: ${vm.cpu_required} cores · MEM: ${vm.memory_required}GB</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="badge ${priBadge}">${priText}</span>
+        <button onclick="removeVM('${vm.vm_id}')" style="background:rgba(255,77,109,.15);border:1px solid rgba(255,77,109,.3);color:var(--red);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-family:var(--font-mono)">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── RENDER SERVER OVERVIEW ──
+function renderServerOverview(servers) {
+  document.getElementById('serverOverview').innerHTML = servers.map(s => `
+    <div class="server-card">
+      <div class="server-card-header">
+        <span class="server-id">🖥 ${s.server_id}</span>
+        <span class="server-cost">$${s.cost_per_unit}/unit</span>
+      </div>
+      <div class="progress-label"><span>CPU</span><span>${s.cpu_used || 0}/${s.cpu_total} cores</span></div>
+      <div class="progress-bar"><div class="progress-fill fill-cpu" style="width:${((s.cpu_used||0)/s.cpu_total*100).toFixed(1)}%"></div></div>
+      <div class="progress-label"><span>MEMORY</span><span>${s.memory_used || 0}/${s.memory_total} GB</span></div>
+      <div class="progress-bar"><div class="progress-fill fill-mem" style="width:${((s.memory_used||0)/s.memory_total*100).toFixed(1)}%"></div></div>
+      <div style="font-size:11px;color:var(--muted);font-family:var(--font-mono);margin-top:8px">
+        UTIL: <span style="color:var(--accent)">${s.utilization_pct || 0}%</span> · 
+        VMs: <span style="color:var(--accent2)">${(s.allocated_vms||[]).length}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ── RUN ALLOCATION ──
+async function runAllocation() {
+  if (!serverList.length) { alert('Please add at least one server first.'); return; }
+  if (!vmQueue.length)    { alert('Please add at least one VM first.'); return; }
+  document.getElementById('loadingSpinner').style.display = 'block';
+  document.getElementById('resultTable').innerHTML = '';
+  switchTab('results', document.querySelector('.tab'));
+
+  const res  = await fetch('/api/allocate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ servers: serverList, vms: vmQueue, algorithm: selectedAlgo })
+  });
+  const data = await res.json();
+  document.getElementById('loadingSpinner').style.display = 'none';
+
+  document.getElementById('statCost').textContent = '$' + data.total_cost;
+  document.getElementById('statTime').textContent = data.exec_time_ms + 'ms';
+
+  renderResultTable(data.allocation_log);
+  renderServerCards(data.server_states);
+  renderServerOverview(data.server_states);
+}
+
+// ── RENDER RESULT TABLE ──
+function renderResultTable(log) {
+  const rows = log.map(r => `
+    <tr>
+      <td><span style="font-family:var(--font-mono);color:var(--accent)">${r.vm_id}</span></td>
+      <td>${r.task}</td>
+      <td>${r.cpu} cores</td>
+      <td>${r.memory} GB</td>
+      <td>${r.server_id ? `<span class="server-pill">${r.server_id}</span>` : '—'}</td>
+      <td style="font-family:var(--font-mono)">$${r.cost}</td>
+      <td style="font-family:var(--font-mono);font-size:11px">${r.score === Infinity ? '∞' : r.score}</td>
+      <td><span class="${r.status === 'Allocated' ? 'status-ok' : 'status-fail'}">${r.status === 'Allocated' ? '✓ OK' : '✗ FAIL'}</span></td>
+    </tr>`).join('');
+
+  document.getElementById('resultTable').innerHTML = `
+    <div style="margin-bottom:10px;font-size:12px;color:var(--muted);font-family:var(--font-mono)">
+      ALGORITHM: <span style="color:var(--accent)">${log.length > 0 ? selectedAlgo.toUpperCase() : ''}</span>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="results-table">
+      <thead><tr>
+        <th>VM ID</th><th>TASK</th><th>CPU</th><th>MEM</th>
+        <th>SERVER</th><th>COST</th><th>H-SCORE</th><th>STATUS</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+}
+
+// ── RENDER SERVER CARDS ──
+function renderServerCards(servers) {
+  document.getElementById('serverCards').innerHTML = `<div class="server-grid">${
+    servers.map(s => `
+      <div class="server-card">
+        <div class="server-card-header">
+          <span class="server-id">🖥 ${s.server_id}</span>
+          <span class="server-cost">$${s.cost_per_unit}/unit</span>
+        </div>
+        <div class="progress-label"><span>CPU USED</span><span>${s.cpu_used}/${s.cpu_total} cores</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-cpu" style="width:${(s.cpu_used/s.cpu_total*100).toFixed(1)}%"></div></div>
+        <div class="progress-label"><span>MEMORY USED</span><span>${s.memory_used}/${s.memory_total} GB</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-mem" style="width:${(s.memory_used/s.memory_total*100).toFixed(1)}%"></div></div>
+        <div style="font-size:11px;color:var(--muted);font-family:var(--font-mono);margin-top:8px">
+          UTILIZATION: <span style="color:var(--accent)">${s.utilization_pct}%</span> · 
+          FREE CPU: ${s.cpu_free} · FREE MEM: ${s.memory_free}GB
+        </div>
+        ${s.allocated_vms.length ? `<div style="margin-top:8px;font-size:11px;color:var(--muted);font-family:var(--font-mono)">VMs: ${s.allocated_vms.map(v=>`<span style="color:var(--accent2)">${v}</span>`).join(', ')}</div>` : ''}
+      </div>`).join('')
+  }</div>`;
+}
+
+// ── RUN COMPARE ──
+async function runCompare() {
+  if (!serverList.length) { alert('Please add at least one server first.'); return; }
+  if (!vmQueue.length)    { alert('Please add at least one VM first.'); return; }
+  switchTab('compare', document.querySelectorAll('.tab')[2]);
+  document.getElementById('compareResult').innerHTML = `
+    <div class="loading" style="display:block">
+      <div class="spinner"></div>COMPARING ALGORITHMS...
+    </div>`;
+
+  const res  = await fetch('/api/compare', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ servers: serverList, vms: vmQueue })
+  });
+  const data = await res.json();
+
+  const g = data.greedy;
+  const a = data.astar;
+  const gCheaper = g.total_cost <= a.total_cost;
+  const gFaster  = g.exec_time_ms <= a.exec_time_ms;
+  const gFewer   = g.nodes_explored <= a.nodes_explored;
+
+  document.getElementById('compareResult').innerHTML = `
+    <div style="margin-bottom:16px;font-size:12px;color:var(--muted);font-family:var(--font-mono)">
+      BENCHMARK · ${vmQueue.length} VMs · ${serverList.length} SERVERS
+    </div>
+    <div class="compare-grid">
+      <div class="compare-algo">
+        <h4>GREEDY BEST-FIRST SEARCH</h4>
+        <div class="metric-row">
+          <span class="metric-key">Total Cost</span>
+          <span class="metric-val ${gCheaper ? 'better' : 'worse'}">$${g.total_cost} ${gCheaper ? '✓' : ''}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-key">Exec Time</span>
+          <span class="metric-val ${gFaster ? 'better' : 'worse'}">${g.exec_time_ms} ms ${gFaster ? '✓' : ''}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-key">Nodes Explored</span>
+          <span class="metric-val ${gFewer ? 'better' : 'worse'}">${g.nodes_explored} ${gFewer ? '✓' : ''}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-key">VMs Allocated</span>
+          <span class="metric-val">${g.allocation_log.filter(x=>x.status==='Allocated').length}/${vmQueue.length}</span>
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.6">
+          Fast heuristic. Prioritizes speed over global optimality. 
+          Good for real-time auto-scaling scenarios.
+        </div>
+      </div>
+      <div class="compare-algo">
+        <h4>A* SEARCH</h4>
+        <div class="metric-row">
+          <span class="metric-key">Total Cost</span>
+          <span class="metric-val ${!gCheaper ? 'better' : 'worse'}">$${a.total_cost} ${!gCheaper ? '✓' : ''}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-key">Exec Time</span>
+          <span class="metric-val ${!gFaster ? 'better' : 'worse'}">${a.exec_time_ms} ms ${!gFaster ? '✓' : ''}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-key">Nodes Explored</span>
+          <span class="metric-val ${!gFewer ? 'better' : 'worse'}">${a.nodes_explored} ${!gFewer ? '✓' : ''}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-key">VMs Allocated</span>
+          <span class="metric-val">${a.allocation_log.filter(x=>x.status==='Allocated').length}/${vmQueue.length}</span>
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.6">
+          Weighted A* (g+h). Combines actual cost + heuristic for near-optimal 
+          allocation. Better for cost-sensitive workloads.
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── TABS ──
+function switchTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+// ── CLEAR ALL ──
+function clearAll() {
+  serverList   = DEFAULT_SERVERS.map(s => ({ ...s }));
+  vmQueue      = DEFAULT_VMS.map(v => ({ ...v }));
+  vmIdCounter  = 9;
+  srvIdCounter = 5;
+  renderVMList();
+  renderServerList();
+  renderServerOverview(serverList);
+  document.getElementById('statServers').textContent = serverList.length;
+  document.getElementById('statVMs').textContent     = vmQueue.length;
+  document.getElementById('statCost').textContent    = '—';
+  document.getElementById('statTime').textContent    = '—';
+  document.getElementById('resultTable').innerHTML   = `<div class="empty-state"><div class="icon">🔍</div>Run allocation to see results</div>`;
+  document.getElementById('serverCards').innerHTML   = `<div class="empty-state"><div class="icon">🖥</div>Run allocation to see server states</div>`;
+  document.getElementById('compareResult').innerHTML = `<div class="empty-state"><div class="icon">⚖</div>Click "Compare Algorithms" to benchmark both</div>`;
+}
+
+
+// ══════════════════════════════════════════
+//  SIMULATION ENGINE  v2 — step-by-step graphs
+// ══════════════════════════════════════════
+
+const SIM = {
+  canvas: null, ctx: null,
+  animFrame: null, running: false, paused: false,
+  tick: 0, vmIndex: 0,
+  particles: [], packets: [], pulses: [],
+  serverNodes: [], vmSource: { x: 0, y: 0 },
+  allocLog: [], simServers: [],
+  cpuHistory: [], costHistory: [],
+  maxHistory: 60,
+  lastTime: 0, stepMs: 800,
+  // animated bar targets
+  barTargets: {},    // server_id → { cpuPct, memPct }
+  barCurrent: {},    // server_id → { cpuPct, memPct }
+  totalCost: 0,
+};
+
+const COLORS = {
+  accent: '#00c8ff', accent2: '#7c5cfc',
+  green:  '#00e5a0', orange: '#ff8c42',
+  red:    '#ff4d6d', yellow: '#ffe066',
+  muted:  '#5a7098', bg2:    '#0d1424',
+  bg3:    '#111c30', border: '#1e2f4a', text: '#e2eaf5',
+};
+
+function simLog(msg, color = COLORS.muted) {
+  const el  = document.getElementById('simLog');
+  const now = new Date().toLocaleTimeString('en', { hour12: false });
+  el.innerHTML = `<div style="color:${color}">[${now}] ${msg}</div>` + el.innerHTML;
+}
+
+// ── INIT CANVAS ──
+function initCanvas() {
+  const canvas = document.getElementById('simCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const W   = canvas.parentElement.clientWidth - 2;
+  const H   = Math.min(300, Math.max(200, W * 0.36));
+  canvas.width  = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  SIM.canvas = canvas; SIM.ctx = ctx; SIM.W = W; SIM.H = H;
+}
+
+// ── LAYOUT SERVER NODES ──
+function layoutServers(servers) {
+  const W = SIM.W, H = SIM.H;
+  SIM.vmSource = { x: W * 0.07, y: H / 2 };
+  const n    = servers.length;
+  const cols = Math.min(4, n);
+  const rows = Math.ceil(n / cols);
+  SIM.serverNodes = servers.map((s, i) => {
+    const col  = i % cols, row = Math.floor(i / cols);
+    const xBase = W * 0.36, xSpan = W * 0.58, ySpan = H * 0.7;
+    return {
+      id: s.server_id,
+      x: xBase + (cols > 1 ? (col / (cols - 1)) * xSpan : xSpan / 2),
+      y: H * 0.15 + (rows > 1 ? (row / (rows - 1)) * ySpan : ySpan / 2),
+      data: s, cpuPct: 0, memPct: 0, flash: 0, vmCount: 0,
+    };
+  });
+  // init bar animation targets
+  servers.forEach(s => {
+    SIM.barTargets[s.server_id] = { cpuPct: 0, memPct: 0 };
+    SIM.barCurrent[s.server_id] = { cpuPct: 0, memPct: 0 };
+  });
+}
+
+// ── SPAWN PACKET ──
+function spawnPacket(vmData, targetNode) {
+  const color = vmData.priority === 1 ? COLORS.red :
+                vmData.priority === 2 ? COLORS.orange : COLORS.green;
+  SIM.packets.push({
+    tx: targetNode.x, ty: targetNode.y,
+    t: 0, duration: 0.65 + Math.random() * 0.2,
+    color, label: vmData.vm_id,
+    targetNode, vmData, done: false,
+  });
+}
+
+// ── BURST ──
+function burst(x, y, color, n = 14) {
+  for (let i = 0; i < n; i++) {
+    const a = (Math.PI * 2 * i) / n + Math.random() * 0.4;
+    const spd = 1.5 + Math.random() * 3;
+    SIM.particles.push({ x, y, vx: Math.cos(a)*spd, vy: Math.sin(a)*spd,
+      life: 1, decay: 0.025 + Math.random()*0.02, color, r: 2 + Math.random()*2 });
+  }
+}
+
+// ── PULSE ──
+function pulse(x, y, color) {
+  SIM.pulses.push({ x, y, r: 5, life: 1, color });
+}
+
+// ── DRAW FRAME ──
+function drawFrame(now) {
+  if (!SIM.running || SIM.paused) return;
+  const dt = Math.min((now - SIM.lastTime) / 1000, 0.1);
+  SIM.lastTime = now;
+  SIM.tick += dt;
+
+  const ctx = SIM.ctx, W = SIM.W, H = SIM.H;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0d1424'; ctx.fillRect(0, 0, W, H);
+
+  // Grid dots
+  ctx.fillStyle = 'rgba(0,200,255,0.035)';
+  for (let gx = 20; gx < W; gx += 32)
+    for (let gy = 16; gy < H; gy += 32) {
+      ctx.beginPath(); ctx.arc(gx, gy, 1, 0, Math.PI*2); ctx.fill();
+    }
+
+  // Connector lines
+  SIM.serverNodes.forEach(node => {
+    const hasAlloc = node.vmCount > 0;
+    ctx.strokeStyle = hasAlloc ? node.data.cost_per_unit > 0.06 ? 'rgba(124,92,252,0.25)' : 'rgba(0,200,255,0.2)' : 'rgba(30,47,74,0.5)';
+    ctx.lineWidth = hasAlloc ? 1.5 : 1;
+    ctx.setLineDash([4, 7]);
+    ctx.beginPath();
+    ctx.moveTo(SIM.vmSource.x, SIM.vmSource.y);
+    ctx.lineTo(node.x, node.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // Pulses
+  SIM.pulses = SIM.pulses.filter(p => p.life > 0);
+  SIM.pulses.forEach(p => {
+    p.r += 1.4; p.life -= 0.022;
+    ctx.strokeStyle = p.color + Math.floor(p.life * 200).toString(16).padStart(2, '0');
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.stroke();
+  });
+
+  // Packets
+  SIM.packets.forEach(pk => {
+    if (pk.done) return;
+    pk.t = Math.min(pk.t + dt / pk.duration, 1);
+    const ease = 1 - Math.pow(1 - pk.t, 3);
+    const sx = SIM.vmSource.x, sy = SIM.vmSource.y;
+    const mx = (sx + pk.tx) / 2 - (pk.ty - sy) * 0.3;
+    const my = (sy + pk.ty) / 2 + (pk.tx - sx) * 0.3;
+    const t  = ease;
+    const cx = (1-t)*(1-t)*sx + 2*(1-t)*t*mx + t*t*pk.tx;
+    const cy = (1-t)*(1-t)*sy + 2*(1-t)*t*my + t*t*pk.ty;
+
+    // Fading trail
+    ctx.strokeStyle = pk.color + '44'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(sx, sy);
+    ctx.quadraticCurveTo(mx, my, cx, cy); ctx.stroke();
+
+    // Glow dot
+    ctx.shadowColor = pk.color; ctx.shadowBlur = 12;
+    ctx.fillStyle = pk.color;
+    ctx.beginPath(); ctx.arc(cx, cy, 5.5, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // VM label tag
+    ctx.fillStyle = 'rgba(13,20,36,0.85)';
+    const tw = ctx.measureText(pk.label).width + 10;
+    ctx.fillRect(cx + 8, cy - 10, tw, 14);
+    ctx.fillStyle = pk.color;
+    ctx.font = '8px Space Mono, monospace';
+    ctx.fillText(pk.label, cx + 13, cy + 0);
+
+    if (pk.t >= 1 && !pk.done) {
+      pk.done = true;
+      burst(pk.tx, pk.ty, pk.color);
+      pulse(pk.tx, pk.ty, pk.color);
+      pk.targetNode.flash = 1.2;
+      pk.targetNode.cpuPct = SIM.barTargets[pk.targetNode.id]?.cpuPct || 0;
+      pk.targetNode.memPct = SIM.barTargets[pk.targetNode.id]?.memPct || 0;
+      pk.targetNode.vmCount++;
+    }
+  });
+
+  // Particles
+  SIM.particles = SIM.particles.filter(p => p.life > 0);
+  SIM.particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.life -= p.decay;
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+
+  // VM Source node
+  const src = SIM.vmSource;
+  const pulse2 = 0.5 + 0.5 * Math.sin(SIM.tick * 3.5);
+  ctx.shadowColor = COLORS.accent; ctx.shadowBlur = 10 * pulse2;
+  ctx.fillStyle = COLORS.bg3; ctx.strokeStyle = COLORS.accent; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(src.x - 32, src.y - 22, 64, 44, 9);
+  ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+  ctx.fillStyle = COLORS.accent; ctx.font = 'bold 8px Space Mono, monospace'; ctx.textAlign = 'center';
+  ctx.fillText('VM QUEUE', src.x, src.y - 7);
+  ctx.fillStyle = COLORS.text; ctx.font = '9px Space Mono, monospace';
+  ctx.fillText(`${SIM.vmIndex} / ${SIM.allocLog.length}`, src.x, src.y + 8);
+  ctx.textAlign = 'left';
+
+  // Server nodes
+  SIM.serverNodes.forEach(node => {
+    if (node.flash > 0) node.flash -= dt * 2.5;
+    const glow  = Math.max(node.flash, 0);
+    const color = node.data.cost_per_unit > 0.06 ? COLORS.accent2 :
+                  node.data.cost_per_unit > 0.04 ? COLORS.accent : COLORS.green;
+
+    ctx.shadowColor = color; ctx.shadowBlur = 6 + glow * 22;
+    ctx.fillStyle   = glow > 0.3 ? '#162236' : COLORS.bg3;
+    ctx.strokeStyle = glow > 0.3 ? color : COLORS.border;
+    ctx.lineWidth   = glow > 0.3 ? 2 : 1;
+    ctx.beginPath(); ctx.roundRect(node.x - 46, node.y - 34, 92, 68, 11);
+    ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+
+    ctx.fillStyle = color; ctx.font = 'bold 9px Space Mono, monospace'; ctx.textAlign = 'center';
+    ctx.fillText('🖥 ' + node.id, node.x, node.y - 19);
+
+    // Animated CPU bar
+    const BAR_W = 74;
+    const cur = SIM.barCurrent[node.id] || { cpuPct: 0, memPct: 0 };
+    const tgt = SIM.barTargets[node.id] || { cpuPct: 0, memPct: 0 };
+    cur.cpuPct += (tgt.cpuPct - cur.cpuPct) * 0.09;
+    cur.memPct += (tgt.memPct - cur.memPct) * 0.09;
+    SIM.barCurrent[node.id] = cur;
+
+    const cpuFill = cur.cpuPct / 100 * BAR_W;
+    const memFill = cur.memPct / 100 * BAR_W;
+
+    ctx.fillStyle = '#1e2f4a';
+    ctx.beginPath(); ctx.roundRect(node.x - BAR_W/2, node.y - 10, BAR_W, 6, 2); ctx.fill();
+    if (cpuFill > 0) {
+      const g = ctx.createLinearGradient(node.x - BAR_W/2, 0, node.x - BAR_W/2 + cpuFill, 0);
+      g.addColorStop(0, '#0080ff'); g.addColorStop(1, COLORS.accent);
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.roundRect(node.x - BAR_W/2, node.y - 10, cpuFill, 6, 2); ctx.fill();
+    }
+
+    ctx.fillStyle = '#1e2f4a';
+    ctx.beginPath(); ctx.roundRect(node.x - BAR_W/2, node.y + 0, BAR_W, 6, 2); ctx.fill();
+    if (memFill > 0) {
+      const g2 = ctx.createLinearGradient(node.x - BAR_W/2, 0, node.x - BAR_W/2 + memFill, 0);
+      g2.addColorStop(0, '#5533cc'); g2.addColorStop(1, COLORS.accent2);
+      ctx.fillStyle = g2;
+      ctx.beginPath(); ctx.roundRect(node.x - BAR_W/2, node.y + 0, memFill, 6, 2); ctx.fill();
+    }
+
+    ctx.fillStyle = COLORS.muted; ctx.font = '7px Space Mono, monospace';
+    ctx.fillText(`C:${cur.cpuPct.toFixed(0)}%  M:${cur.memPct.toFixed(0)}%  VMs:${node.vmCount}`, node.x - 34, node.y + 16);
+    ctx.textAlign = 'left';
+  });
+
+  // Step dispatch
+  if (SIM.vmIndex < SIM.allocLog.length) {
+    const since   = SIM.tick - (SIM._lastStep || 0);
+    const speed   = parseInt(document.getElementById('simSpeed').value);
+    const interval = (SIM.stepMs / speed) / 1000;
+    if (since >= interval) {
+      SIM._lastStep = SIM.tick;
+      dispatchStep();
+    }
+  } else if (SIM.allocLog.length > 0 && SIM.packets.every(p => p.done)) {
+    document.getElementById('simStatus').textContent = '✓ COMPLETE';
+    simLog('─── SIMULATION COMPLETE — All VMs processed ───', COLORS.accent);
+    document.getElementById('simStepBanner').style.display = 'none';
+    SIM.running = false;
+    return;
+  }
+
+  SIM.animFrame = requestAnimationFrame(drawFrame);
+}
+
+// ── DISPATCH ONE STEP ──
+function dispatchStep() {
+  const entry = SIM.allocLog[SIM.vmIndex];
+  SIM.vmIndex++;
+
+  // Update step banner
+  const banner = document.getElementById('simStepBanner');
+  banner.style.display = 'flex';
+  document.getElementById('bannerStep').textContent  = SIM.vmIndex;
+  document.getElementById('bannerTotal').textContent = SIM.allocLog.length;
+  document.getElementById('bannerVm').textContent    = `${entry.vm_id} · ${entry.task}`;
+  document.getElementById('simStatus').textContent   = `STEP ${SIM.vmIndex}/${SIM.allocLog.length}`;
+
+  if (entry.server_id) {
+    const node        = SIM.serverNodes.find(n => n.id === entry.server_id);
+    const matchServer = SIM.simServers.find(s => s.server_id === entry.server_id);
+    if (node && matchServer) {
+      matchServer.cpu_used    = (matchServer.cpu_used || 0)    + entry.cpu;
+      matchServer.memory_used = (matchServer.memory_used || 0) + entry.memory;
+      if (!matchServer.allocated_vms) matchServer.allocated_vms = [];
+      matchServer.allocated_vms.push(entry.vm_id);
+      node.data = matchServer;
+      // Update bar targets
+      SIM.barTargets[entry.server_id] = {
+        cpuPct: matchServer.cpu_used    / matchServer.cpu_total    * 100,
+        memPct: matchServer.memory_used / matchServer.memory_total * 100,
+      };
+    }
+    SIM.totalCost += entry.cost;
+    spawnPacket({ vm_id: entry.vm_id, priority: entry.priority || 2 }, node);
+    simLog(`✓ ${entry.vm_id} (${entry.task}) → ${entry.server_id} | CPU:${entry.cpu} MEM:${entry.memory}GB | $${entry.cost}`, COLORS.green);
+    document.getElementById('bannerSrv').textContent  = `Server ${entry.server_id}`;
+    document.getElementById('bannerCost').textContent = `$${SIM.totalCost.toFixed(2)} total`;
+  } else {
+    burst(SIM.vmSource.x, SIM.vmSource.y, COLORS.red, 10);
+    simLog(`✗ ${entry.vm_id} (${entry.task}) — FAILED: No server has capacity`, COLORS.red);
+    document.getElementById('bannerSrv').textContent  = '✗ No capacity';
+    document.getElementById('bannerCost').textContent = `$${SIM.totalCost.toFixed(2)} total`;
+  }
+
+  updateAllCharts();
+  renderServerBars();
+}
+
+// ── RENDER ANIMATED SERVER BARS ──
+function renderServerBars() {
+  const container = document.getElementById('serverBarsChart');
+  if (!container) return;
+  const rows = SIM.simServers.map(s => {
+    const cpuPct = ((s.cpu_used || 0) / s.cpu_total * 100).toFixed(1);
+    const memPct = ((s.memory_used || 0) / s.memory_total * 100).toFixed(1);
+    const vmC    = (s.allocated_vms || []).length;
+    const color  = s.cost_per_unit > 0.06 ? COLORS.accent2 : s.cost_per_unit > 0.04 ? COLORS.accent : COLORS.green;
+    return `
+      <div style="border:1px solid var(--border);border-radius:8px;padding:10px 14px;background:var(--bg3);transition:background .3s">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-family:var(--font-mono);font-size:12px;color:${color}">🖥 ${s.server_id}</span>
+          <span style="font-size:11px;color:var(--muted);font-family:var(--font-mono)">${vmC} VM${vmC!==1?'s':''} · $${s.cost_per_unit}/unit</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+          <span style="font-size:10px;font-family:var(--font-mono);color:var(--accent);width:32px">CPU</span>
+          <div style="flex:1;height:10px;background:#1e2f4a;border-radius:5px;overflow:hidden">
+            <div style="height:100%;width:${cpuPct}%;background:linear-gradient(90deg,#0080ff,${COLORS.accent});border-radius:5px;transition:width 0.6s cubic-bezier(0.4,0,0.2,1)"></div>
+          </div>
+          <span style="font-size:10px;font-family:var(--font-mono);color:var(--accent);width:42px;text-align:right">${cpuPct}%</span>
+          <span style="font-size:10px;font-family:var(--font-mono);color:var(--muted)">${s.cpu_used||0}/${s.cpu_total}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:10px;font-family:var(--font-mono);color:var(--accent2);width:32px">MEM</span>
+          <div style="flex:1;height:10px;background:#1e2f4a;border-radius:5px;overflow:hidden">
+            <div style="height:100%;width:${memPct}%;background:linear-gradient(90deg,#5533cc,${COLORS.accent2});border-radius:5px;transition:width 0.6s cubic-bezier(0.4,0,0.2,1)"></div>
+          </div>
+          <span style="font-size:10px;font-family:var(--font-mono);color:var(--accent2);width:42px;text-align:right">${memPct}%</span>
+          <span style="font-size:10px;font-family:var(--font-mono);color:var(--muted)">${s.memory_used||0}/${s.memory_total}GB</span>
+        </div>
+      </div>`;
+  }).join('');
+  container.innerHTML = rows;
+}
+
+// ── UPDATE LINE CHARTS ──
+function updateAllCharts() {
+  const servers = SIM.simServers;
+  const avgCpu  = servers.reduce((a, s) => a + (s.cpu_used||0)/s.cpu_total, 0) / servers.length * 100;
+  SIM.cpuHistory.push(avgCpu);
+  SIM.costHistory.push(SIM.totalCost);
+  if (SIM.cpuHistory.length  > SIM.maxHistory) SIM.cpuHistory.shift();
+  if (SIM.costHistory.length > SIM.maxHistory) SIM.costHistory.shift();
+
+  drawLineChart('cpuChart',  SIM.cpuHistory,  COLORS.accent,  'rgba(0,200,255,0.12)', '%', 100);
+  drawLineChart('costChart', SIM.costHistory, COLORS.accent2, 'rgba(124,92,252,0.12)', '$', null);
+}
+
+function drawLineChart(id, data, lineColor, fillColor, unit, maxVal) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W   = canvas.parentElement.clientWidth - 28;
+  const H   = 72;
+  canvas.width  = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  const max = maxVal || Math.max(...data, 1) * 1.15;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(30,47,74,0.5)'; ctx.lineWidth = 0.5;
+  [0, 0.25, 0.5, 0.75, 1].forEach(frac => {
+    const y = H - frac * (H - 12) - 6;
+    ctx.beginPath(); ctx.moveTo(30, y); ctx.lineTo(W, y); ctx.stroke();
+    ctx.fillStyle = 'rgba(90,112,152,0.6)'; ctx.font = '7px Space Mono, monospace';
+    ctx.fillText((frac * max).toFixed(frac === 0 ? 0 : 1) + unit, 2, y + 3);
+  });
+
+  if (data.length < 2) return;
+
+  const xOf = i => 30 + (i / (SIM.maxHistory - 1)) * (W - 30);
+  const yOf = v => H - (v / max) * (H - 12) - 6;
+
+  // Fill
+  ctx.beginPath(); ctx.moveTo(xOf(0), H);
+  data.forEach((v, i) => ctx.lineTo(xOf(i), yOf(v)));
+  ctx.lineTo(xOf(data.length - 1), H); ctx.closePath();
+  ctx.fillStyle = fillColor; ctx.fill();
+
+  // Smooth line
+  ctx.strokeStyle = lineColor; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  data.forEach((v, i) => i === 0 ? ctx.moveTo(xOf(i), yOf(v)) : ctx.lineTo(xOf(i), yOf(v)));
+  ctx.stroke();
+
+  // Step markers (dots at each data point)
+  data.forEach((v, i) => {
+    ctx.fillStyle = lineColor + '88';
+    ctx.beginPath(); ctx.arc(xOf(i), yOf(v), 2, 0, Math.PI*2); ctx.fill();
+  });
+
+  // Glowing last point
+  const lx = xOf(data.length - 1), ly = yOf(data[data.length-1]);
+  ctx.shadowColor = lineColor; ctx.shadowBlur = 10;
+  ctx.fillStyle = lineColor;
+  ctx.beginPath(); ctx.arc(lx, ly, 4, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Value label
+  ctx.fillStyle = lineColor; ctx.font = 'bold 9px Space Mono, monospace';
+  ctx.fillText(unit === '%' ? data[data.length-1].toFixed(1)+'%' : '$'+data[data.length-1].toFixed(2), lx - 18, ly - 7);
+}
+
+// ── CONTROLS ──
+async function startSimulation() {
+  if (!serverList.length || !vmQueue.length) {
+    alert('Please add servers and VMs first.'); return;
+  }
+  if (SIM.running && !SIM.paused) return;
+  if (SIM.paused) {
+    SIM.paused = false; SIM.lastTime = performance.now();
+    SIM.animFrame = requestAnimationFrame(drawFrame); return;
+  }
+
+  switchTab('simulation', document.querySelectorAll('.tab')[3]);
+  initCanvas();
+  SIM.running = true; SIM.paused = false;
+  SIM.tick = 0; SIM._lastStep = 0; SIM.vmIndex = 0;
+  SIM.particles = []; SIM.packets = []; SIM.pulses = [];
+  SIM.cpuHistory = []; SIM.costHistory = []; SIM.totalCost = 0;
+  SIM.barTargets = {}; SIM.barCurrent = {};
+  document.getElementById('simLog').innerHTML = '';
+  document.getElementById('simStatus').textContent = 'LOADING...';
+  document.getElementById('simStepBanner').style.display = 'none';
+  document.getElementById('serverBarsChart').innerHTML = '';
+
+  const res  = await fetch('/api/allocate', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ servers: serverList, vms: vmQueue, algorithm: selectedAlgo })
+  });
+  const data = await res.json();
+
+  SIM.allocLog = data.allocation_log.map(e => {
+    const vm = vmQueue.find(v => v.vm_id === e.vm_id);
+    return { ...e, priority: vm ? vm.priority : 2 };
+  });
+  SIM.simServers = serverList.map(s => ({ ...s, cpu_used: 0, memory_used: 0, allocated_vms: [] }));
+
+  layoutServers(SIM.simServers);
+  renderServerBars();
+  simLog(`▶ Simulation started: ${SIM.allocLog.length} VMs · ${serverList.length} servers · ${selectedAlgo.toUpperCase()}`, COLORS.accent);
+  document.getElementById('simStatus').textContent = 'RUNNING';
+  SIM.lastTime = performance.now();
+  SIM.animFrame = requestAnimationFrame(drawFrame);
+}
+
+function pauseSimulation() {
+  if (!SIM.running) return;
+  SIM.paused = !SIM.paused;
+  document.getElementById('simStatus').textContent = SIM.paused ? '⏸ PAUSED' : 'RUNNING';
+  if (!SIM.paused) { SIM.lastTime = performance.now(); SIM.animFrame = requestAnimationFrame(drawFrame); }
+}
+
+function resetSimulation() {
+  SIM.running = false; SIM.paused = false;
+  cancelAnimationFrame(SIM.animFrame);
+  SIM.packets = []; SIM.particles = []; SIM.pulses = [];
+  SIM.cpuHistory = []; SIM.costHistory = []; SIM.vmIndex = 0; SIM.totalCost = 0;
+  SIM.barTargets = {}; SIM.barCurrent = {};
+  document.getElementById('simStatus').textContent = 'IDLE';
+  document.getElementById('simLog').innerHTML = '';
+  document.getElementById('simStepBanner').style.display = 'none';
+  document.getElementById('serverBarsChart').innerHTML = '';
+  if (SIM.ctx) SIM.ctx.clearRect(0, 0, SIM.W, SIM.H);
+  ['cpuChart','costChart'].forEach(id => {
+    const c = document.getElementById(id);
+    if (c) { const ctx2 = c.getContext('2d'); ctx2.clearRect(0,0,c.width,c.height); }
+  });
+}
+
+init();
+</script>
+</body>
+</html>
